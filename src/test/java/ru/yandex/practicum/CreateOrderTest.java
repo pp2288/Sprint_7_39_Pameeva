@@ -4,6 +4,8 @@ import io.restassured.response.Response;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import ru.yandex.practicum.client.OrderClient;
+import ru.yandex.practicum.model.Order;
 
 import static org.hamcrest.Matchers.notNullValue;
 
@@ -18,7 +20,6 @@ public class CreateOrderTest extends ScooterBaseTest {
         this.description = description;
     }
 
-    // Набор тестовых данных: разные комбинации цветов
     @Parameterized.Parameters(name = "{1}")
     public static Object[][] getTestData() {
         return new Object[][]{
@@ -31,30 +32,20 @@ public class CreateOrderTest extends ScooterBaseTest {
 
     @Test
     public void createOrderReturnsTrack() {
-        // JSON для массива цветов
-        StringBuilder colorJson = new StringBuilder("[");
-        for (int i = 0; i < color.length; i++) {
-            colorJson.append("\"").append(color[i]).append("\"");
-            if (i < color.length - 1) colorJson.append(", ");
-        }
-        colorJson.append("]");
-
-        String body = String.format(
-                "{\"firstName\": \"Анна\", " +
-                        "\"lastName\": \"Иванова\", " +
-                        "\"address\": \"Москва, ул. Тестовая, 1\", " +
-                        "\"metroStation\": 4, " +
-                        "\"phone\": \"+7 800 555 55 55\", " +
-                        "\"rentTime\": 5, " +
-                        "\"deliveryDate\": \"2026-06-06\", " +
-                        "\"comment\": \"Тестовый заказ\", " +
-                        "\"color\": %s}", colorJson
+        Order order = new Order(
+                "Анна",
+                "Иванова",
+                "Москва, ул. Тестовая, 1",
+                4,
+                "+7 800 555 55 55",
+                5,
+                "2026-06-06",
+                "Тестовый заказ",
+                color
         );
 
-        Response response = io.restassured.RestAssured.given()
-                .header("Content-Type", "application/json")
-                .body(body)
-                .post("/api/v1/orders");
+        OrderClient orderClient = new OrderClient();
+        Response response = orderClient.create(order);
 
         response.then()
                 .statusCode(201)

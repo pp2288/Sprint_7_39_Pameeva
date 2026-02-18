@@ -4,6 +4,8 @@ import io.restassured.response.Response;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import ru.yandex.practicum.client.CourierClient;
+import ru.yandex.practicum.model.Courier;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
@@ -19,7 +21,6 @@ public class CreateCourierTest extends ScooterBaseTest {
     @Before
     public void init() {
         courierClient = new CourierClient();
-        // Генерируем уникальный логин, чтобы тесты не мешали друг другу
         login = "testcourier" + System.currentTimeMillis();
         password = "12345";
         firstName = "Иван";
@@ -28,15 +29,13 @@ public class CreateCourierTest extends ScooterBaseTest {
 
     @After
     public void tearDown() {
-        // Удаляем курьера после теста, если он был создан
         if (courierId != 0) {
             courierClient.delete(courierId);
         }
     }
 
-    // Вспомогательный метод: логинимся и сохраняем ид для последующего удаления
     private void loginAndSaveId() {
-        Response loginResponse = courierClient.login(login, password);
+        Response loginResponse = courierClient.login(new Courier(login, password));
         if (loginResponse.statusCode() == 200) {
             courierId = loginResponse.jsonPath().getInt("id");
         }
@@ -45,7 +44,7 @@ public class CreateCourierTest extends ScooterBaseTest {
     // Курьера можно создать — запрос возвращает 201 и ok: true
     @Test
     public void courierCanBeCreated() {
-        Response response = courierClient.create(login, password, firstName);
+        Response response = courierClient.create(new Courier(login, password, firstName));
 
         response.then()
                 .statusCode(201)
@@ -57,12 +56,10 @@ public class CreateCourierTest extends ScooterBaseTest {
     // Нельзя создать двух одинаковых курьеров
     @Test
     public void cannotCreateDuplicateCourier() {
-        // Создаём первого курьера
-        courierClient.create(login, password, firstName);
+        courierClient.create(new Courier(login, password, firstName));
         loginAndSaveId();
 
-        // Пытаемся создать с тем же логинм
-        Response response = courierClient.create(login, password, firstName);
+        Response response = courierClient.create(new Courier(login, password, firstName));
 
         response.then()
                 .statusCode(409);
@@ -71,10 +68,10 @@ public class CreateCourierTest extends ScooterBaseTest {
     // Если создать курьера с логином, который уже есть — ошибка
     @Test
     public void createCourierWithExistingLoginReturnsError() {
-        courierClient.create(login, password, firstName);
+        courierClient.create(new Courier(login, password, firstName));
         loginAndSaveId();
 
-        Response response = courierClient.create(login, "otherpass", "Пётр");
+        Response response = courierClient.create(new Courier(login, "otherpass", "Пётр"));
 
         response.then()
                 .statusCode(409)
@@ -84,7 +81,7 @@ public class CreateCourierTest extends ScooterBaseTest {
     // Нельзя создать курьера без логина
     @Test
     public void cannotCreateCourierWithoutLogin() {
-        Response response = courierClient.create("", password, firstName);
+        Response response = courierClient.create(new Courier("", password, firstName));
 
         response.then()
                 .statusCode(400)
@@ -94,7 +91,7 @@ public class CreateCourierTest extends ScooterBaseTest {
     // Нельзя создать курьера без пароля
     @Test
     public void cannotCreateCourierWithoutPassword() {
-        Response response = courierClient.create(login, "", firstName);
+        Response response = courierClient.create(new Courier(login, "", firstName));
 
         response.then()
                 .statusCode(400)

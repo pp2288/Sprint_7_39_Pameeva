@@ -4,6 +4,8 @@ import io.restassured.response.Response;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import ru.yandex.practicum.client.CourierClient;
+import ru.yandex.practicum.model.Courier;
 
 import static org.hamcrest.Matchers.*;
 
@@ -21,15 +23,13 @@ public class LoginCourierTest extends ScooterBaseTest {
         password = "12345";
         courierId = 0;
 
-        // Создаём курьера для тестов логина
-        courierClient.create(login, password, "Тест");
+        courierClient.create(new Courier(login, password, "Тест"));
     }
 
     @After
     public void tearDown() {
-        // Пытаемся залогиниться и удалить курьера
         if (courierId == 0) {
-            Response loginResponse = courierClient.login(login, password);
+            Response loginResponse = courierClient.login(new Courier(login, password));
             if (loginResponse.statusCode() == 200) {
                 courierId = loginResponse.jsonPath().getInt("id");
             }
@@ -42,7 +42,7 @@ public class LoginCourierTest extends ScooterBaseTest {
     // Курьер может авторизоваться — успешный запрос возвращает id
     @Test
     public void courierCanLogin() {
-        Response response = courierClient.login(login, password);
+        Response response = courierClient.login(new Courier(login, password));
 
         response.then()
                 .statusCode(200)
@@ -54,7 +54,7 @@ public class LoginCourierTest extends ScooterBaseTest {
     // Если неправильный пароль — ошибка
     @Test
     public void loginWithWrongPasswordReturnsError() {
-        Response response = courierClient.login(login, "wrongpassword");
+        Response response = courierClient.login(new Courier(login, "wrongpassword"));
 
         response.then()
                 .statusCode(404)
@@ -64,7 +64,7 @@ public class LoginCourierTest extends ScooterBaseTest {
     // Если неправильный логин — ошибка
     @Test
     public void loginWithWrongLoginReturnsError() {
-        Response response = courierClient.login("nonexistentlogin", password);
+        Response response = courierClient.login(new Courier("nonexistentlogin", password));
 
         response.then()
                 .statusCode(404)
@@ -74,7 +74,7 @@ public class LoginCourierTest extends ScooterBaseTest {
     // Если нет поля login — ошибка
     @Test
     public void loginWithoutLoginFieldReturnsError() {
-        Response response = courierClient.login("", password);
+        Response response = courierClient.login(new Courier("", password));
 
         response.then()
                 .statusCode(400)
@@ -84,7 +84,7 @@ public class LoginCourierTest extends ScooterBaseTest {
     // Если нет поля password — ошибка
     @Test
     public void loginWithoutPasswordFieldReturnsError() {
-        Response response = courierClient.login(login, "");
+        Response response = courierClient.login(new Courier(login, ""));
 
         response.then()
                 .statusCode(400)
@@ -94,7 +94,7 @@ public class LoginCourierTest extends ScooterBaseTest {
     // Авторизация под несуществующим пользователем — ошибка
     @Test
     public void loginNonExistentCourierReturnsError() {
-        Response response = courierClient.login("fakecourier999999", "fakepass");
+        Response response = courierClient.login(new Courier("fakecourier999999", "fakepass"));
 
         response.then()
                 .statusCode(404)

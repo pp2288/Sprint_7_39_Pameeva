@@ -1,17 +1,19 @@
 package ru.yandex.practicum;
 
+import io.restassured.response.Response;
 import org.junit.Test;
+import ru.yandex.practicum.client.OrderClient;
 
-import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.notNullValue;
 
 public class OrderListTest extends ScooterBaseTest {
 
     @Test
     public void getOrderListReturnsOrders() {
-        given()
-                .get("/api/v1/orders")
-                .then()
+        OrderClient orderClient = new OrderClient();
+        Response response = orderClient.getOrders();
+
+        response.then()
                 .statusCode(200)
                 .body("orders", notNullValue());
     }
